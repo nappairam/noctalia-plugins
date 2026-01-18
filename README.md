@@ -16,7 +16,7 @@ Then restart Noctalia and enable the plugin in Settings > Plugins.
 
 | Plugin | Description |
 |--------|-------------|
-| *Coming soon* | |
+| [globalprotect-vpn](globalprotect-vpn) | GlobalProtect VPN connection toggle |
 
 ## Development
 
