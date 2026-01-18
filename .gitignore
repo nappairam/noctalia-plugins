@@ -1,0 +1,13 @@
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated settings (per-user)
+**/settings.json
