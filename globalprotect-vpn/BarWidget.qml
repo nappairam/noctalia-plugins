@@ -1,18 +1,20 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Widgets
 import qs.Services.UI
 
-NIconButton {
+Item {
     id: root
 
     property var pluginApi: null
     property ShellScreen screen
     property string widgetId: ""
     property string section: ""
-    property real scaling: 1.0
+    property int sectionWidgetIndex: -1
+    property int sectionWidgetsCount: 0
 
     property bool connected: false
     property bool connecting: false
@@ -23,20 +25,51 @@ NIconButton {
     property bool configured: root.portal !== ""
     property string gatewayArg: root.gateway !== "" ? " -g " + root.gateway : ""
 
-    baseSize: Style.capsuleHeight
-    compact: (Settings.data.bar.density === "compact")
-    icon: "shield"
-    colorBg: Settings.data.bar.showCapsule ? Color.mSurfaceVariant : Color.transparent
-    colorFg: root.connected ? "#4caf50" : (root.connecting ? "#ffeb3b" : Color.mOnSurfaceVariant)
-    colorBorder: Color.transparent
-    colorBorderHover: Color.transparent
-    opacity: (root.connected || root.connecting) ? Style.opacityFull : Style.opacityMedium
-    tooltipDirection: BarService.getTooltipDirection()
-    tooltipText: !root.configured
-        ? "VPN not configured • Set NOCTALIA_GPCLIENT_PORTAL"
-        : (root.connected
-            ? "Connected • Right-click to disconnect"
-            : "Disconnected • Click to connect")
+    readonly property real contentWidth: Style.capsuleHeight
+    readonly property real contentHeight: Style.capsuleHeight
+
+    implicitWidth: contentWidth
+    implicitHeight: contentHeight
+
+    Rectangle {
+        id: visualCapsule
+        x: Style.pixelAlignCenter(parent.width, width)
+        y: Style.pixelAlignCenter(parent.height, height)
+        width: root.contentWidth
+        height: root.contentHeight
+        color: mouseArea.containsMouse ? Color.mHover : Style.capsuleColor
+        radius: Style.radiusL
+
+        NIcon {
+            id: vpnIcon
+            anchors.centerIn: parent
+            icon: "shield"
+            pointSize: Style.fontSizeL
+            applyUiScale: false
+            color: {
+                if (root.connected) return "#4caf50"
+                if (root.connecting) return "#ffeb3b"
+                return mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+            }
+
+            SequentialAnimation on opacity {
+                running: root.connecting
+                loops: Animation.Infinite
+                alwaysRunToEnd: true
+
+                NumberAnimation {
+                    to: 0.25
+                    duration: Style.animationNormal
+                    easing.type: Easing.OutQuad
+                }
+                NumberAnimation {
+                    to: 1.0
+                    duration: Style.animationNormal
+                    easing.type: Easing.InQuad
+                }
+            }
+        }
+    }
 
     // Poll for tunnel interface status
     Timer {
@@ -61,25 +94,67 @@ NIconButton {
     Process {
         id: connectProc
         command: ["sh", "-c", "sudo -E gpclient connect " + root.portal + root.gatewayArg + " --default-browser -i " + root.iface]
+        onExited: function(exitCode, exitStatus) {
+            // gpclient exited without bringing iface up → auth failed or aborted
+            if (!root.connected) {
+                root.connecting = false
+            }
+        }
     }
 
     Process {
         id: disconnectProc
         command: ["sh", "-c", "sudo -E gpclient disconnect"]
-    }
-
-    onClicked: {
-        if (!root.configured) return
-        if (!root.connected && !root.connecting) {
-            root.connecting = true
-            connectProc.running = true
+        onExited: function(exitCode, exitStatus) {
+            root.connecting = false
+            root.connected = false
         }
     }
 
-    onRightClicked: {
-        if (!root.configured) return
-        if (root.connected) {
-            disconnectProc.running = true
+    // Kill any in-flight `gpclient connect` (incl. its sudo wrapper) when
+    // the user cancels mid-connect. `gpclient disconnect` only tears down
+    // an established session and leaves the connect process running.
+    Process {
+        id: killConnectProc
+        command: ["sh", "-c", "sudo pkill -TERM -f 'gpclient connect' 2>/dev/null; true"]
+    }
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
+
+        onEntered: {
+            let msg
+            if (!root.configured) {
+                msg = "VPN not configured • Set NOCTALIA_GPCLIENT_PORTAL"
+            } else if (root.connected) {
+                msg = "Connected • Right-click to disconnect"
+            } else if (root.connecting) {
+                msg = "Connecting • Right-click to cancel"
+            } else {
+                msg = "Disconnected • Click to connect"
+            }
+            TooltipService.show(root, msg, BarService.getTooltipDirection())
+        }
+        onExited: TooltipService.hide()
+
+        onClicked: function(mouse) {
+            if (!root.configured) return
+            if (mouse.button === Qt.RightButton) {
+                if (root.connecting && !root.connected) {
+                    killConnectProc.running = true
+                } else if (root.connected) {
+                    disconnectProc.running = true
+                }
+            } else {
+                if (!root.connected && !root.connecting) {
+                    root.connecting = true
+                    connectProc.running = true
+                }
+            }
         }
     }
 }
