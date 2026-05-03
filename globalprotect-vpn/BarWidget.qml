@@ -5,13 +5,14 @@ import qs.Commons
 import qs.Widgets
 import qs.Services.UI
 
-Rectangle {
+NIconButton {
     id: root
 
     property var pluginApi: null
     property ShellScreen screen
     property string widgetId: ""
     property string section: ""
+    property real scaling: 1.0
 
     property bool connected: false
     property bool connecting: false
@@ -22,18 +23,20 @@ Rectangle {
     property bool configured: root.portal !== ""
     property string gatewayArg: root.gateway !== "" ? " -g " + root.gateway : ""
 
-    implicitWidth: vpnIcon.implicitWidth + Style.marginS * 2
-    implicitHeight: vpnIcon.implicitHeight + Style.marginS * 2
-    color: Style.capsuleColor
-    radius: Style.radiusM
-    opacity: (root.connected || root.connecting) ? 1.0 : 0.4
-
-    NIcon {
-        id: vpnIcon
-        anchors.centerIn: parent
-        icon: "shield"
-        color: Color.mOnSurfaceVariant
-    }
+    baseSize: Style.capsuleHeight
+    compact: (Settings.data.bar.density === "compact")
+    icon: "shield"
+    colorBg: Settings.data.bar.showCapsule ? Color.mSurfaceVariant : Color.transparent
+    colorFg: root.connected ? "#4caf50" : (root.connecting ? "#ffeb3b" : Color.mOnSurfaceVariant)
+    colorBorder: Color.transparent
+    colorBorderHover: Color.transparent
+    opacity: (root.connected || root.connecting) ? Style.opacityFull : Style.opacityMedium
+    tooltipDirection: BarService.getTooltipDirection()
+    tooltipText: !root.configured
+        ? "VPN not configured • Set NOCTALIA_GPCLIENT_PORTAL"
+        : (root.connected
+            ? "Connected • Right-click to disconnect"
+            : "Disconnected • Click to connect")
 
     // Poll for tunnel interface status
     Timer {
@@ -51,9 +54,6 @@ Rectangle {
             root.connected = (exitCode === 0)
             if (root.connected) {
                 root.connecting = false
-                vpnIcon.color = "#4caf50"
-            } else if (!root.connecting) {
-                vpnIcon.color = Color.mOnSurfaceVariant
             }
         }
     }
@@ -68,38 +68,18 @@ Rectangle {
         command: ["sh", "-c", "sudo -E gpclient disconnect"]
     }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        cursorShape: Qt.PointingHandCursor
-        hoverEnabled: true
-
-        onEntered: {
-            let msg
-            if (!root.configured) {
-                msg = "VPN not configured • Set NOCTALIA_GPCLIENT_PORTAL"
-            } else if (root.connected) {
-                msg = "Connected • Right-click to disconnect"
-            } else {
-                msg = "Disconnected • Click to connect"
-            }
-            TooltipService.show(root, msg, BarService.getTooltipDirection())
+    onClicked: {
+        if (!root.configured) return
+        if (!root.connected && !root.connecting) {
+            root.connecting = true
+            connectProc.running = true
         }
-        onExited: TooltipService.hide()
+    }
 
-        onClicked: function(mouse) {
-            if (!root.configured) return
-            if (mouse.button === Qt.RightButton) {
-                if (root.connected) {
-                    disconnectProc.running = true
-                }
-            } else {
-                if (!root.connected && !root.connecting) {
-                    root.connecting = true
-                    vpnIcon.color = "#ffeb3b"
-                    connectProc.running = true
-                }
-            }
+    onRightClicked: {
+        if (!root.configured) return
+        if (root.connected) {
+            disconnectProc.running = true
         }
     }
 }

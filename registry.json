@@ -1,10 +1,10 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "plugins": [
     {
       "id": "globalprotect-vpn",
       "name": "GlobalProtect VPN",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": "Mariappan Ramasamy",
       "description": "GlobalProtect VPN connection toggle",
       "repository": "https://github.com/nappairam/noctalia-plugins",
