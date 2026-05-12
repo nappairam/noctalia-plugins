@@ -9,11 +9,24 @@ Item {
 
     property var pluginApi: null
 
-    property string portal: Quickshell.env("NOCTALIA_GPCLIENT_PORTAL") ?? ""
-    property string gateway: Quickshell.env("NOCTALIA_GPCLIENT_GATEWAY") ?? ""
-    property string iface: Quickshell.env("NOCTALIA_GPCLIENT_INTERFACE") ?? "gpd0"
-    property bool configured: root.portal !== ""
-    property string gatewayArg: root.gateway !== "" ? " -g " + root.gateway : ""
+    // Plugin settings override env vars; env vars override hardcoded default.
+    readonly property string portal:
+        (pluginApi?.pluginSettings?.portal || "") !== ""
+            ? pluginApi.pluginSettings.portal
+            : (Quickshell.env("NOCTALIA_GPCLIENT_PORTAL") ?? "")
+
+    readonly property string gateway:
+        (pluginApi?.pluginSettings?.gateway || "") !== ""
+            ? pluginApi.pluginSettings.gateway
+            : (Quickshell.env("NOCTALIA_GPCLIENT_GATEWAY") ?? "")
+
+    readonly property string iface:
+        (pluginApi?.pluginSettings?.iface || "") !== ""
+            ? pluginApi.pluginSettings.iface
+            : (Quickshell.env("NOCTALIA_GPCLIENT_INTERFACE") ?? "gpd0")
+
+    readonly property bool configured: root.portal !== ""
+    readonly property string gatewayArg: root.gateway !== "" ? " -g " + root.gateway : ""
 
     property bool connected: false
     property bool connecting: false

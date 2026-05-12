@@ -39,9 +39,10 @@ Item {
             pointSize: Style.fontSizeL
             applyUiScale: false
             color: {
+                if (mouseArea.containsMouse) return Color.mOnHover
                 if (mainInstance?.connected ?? false) return "#4caf50"
                 if (mainInstance?.connecting ?? false) return "#ffeb3b"
-                return mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+                return Color.mOnSurface
             }
 
             SequentialAnimation on opacity {
@@ -51,12 +52,12 @@ Item {
 
                 NumberAnimation {
                     to: 0.25
-                    duration: Style.animationNormal
+                    duration: Style.animationSlowest
                     easing.type: Easing.OutQuad
                 }
                 NumberAnimation {
                     to: 1.0
-                    duration: Style.animationNormal
+                    duration: Style.animationSlowest
                     easing.type: Easing.InQuad
                 }
             }
