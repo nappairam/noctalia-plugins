@@ -1,20 +1,25 @@
 {
   "id": "globalprotect-vpn",
   "name": "GlobalProtect VPN",
-  "version": "1.2.0",
-  "minNoctaliaVersion": "3.6.0",
+  "version": "1.3.0",
+  "minNoctaliaVersion": "4.0.0",
   "author": "Mariappan Ramasamy",
   "license": "MIT",
   "repository": "https://github.com/nappairam/noctalia-plugins",
-  "description": "GlobalProtect VPN connection toggle",
-  "tags": ["Network", "Bar"],
+  "description": "GlobalProtect VPN connection toggle with status panel",
+  "tags": ["Network", "Bar", "Panel"],
   "entryPoints": {
-    "barWidget": "BarWidget.qml"
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml",
+    "settings": "Settings.qml"
   },
   "dependencies": {
     "plugins": []
   },
   "metadata": {
-    "defaultSettings": {}
+    "defaultSettings": {
+      "defaultRoute": false
+    }
   }
 }

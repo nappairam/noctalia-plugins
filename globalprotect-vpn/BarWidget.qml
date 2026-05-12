@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.Commons
 import qs.Widgets
 import qs.Services.UI
@@ -16,14 +15,7 @@ Item {
     property int sectionWidgetIndex: -1
     property int sectionWidgetsCount: 0
 
-    property bool connected: false
-    property bool connecting: false
-
-    property string portal: Quickshell.env("NOCTALIA_GPCLIENT_PORTAL") ?? ""
-    property string gateway: Quickshell.env("NOCTALIA_GPCLIENT_GATEWAY") ?? ""
-    property string iface: Quickshell.env("NOCTALIA_GPCLIENT_INTERFACE") ?? "gpd0"
-    property bool configured: root.portal !== ""
-    property string gatewayArg: root.gateway !== "" ? " -g " + root.gateway : ""
+    readonly property var mainInstance: pluginApi?.mainInstance
 
     readonly property real contentWidth: Style.capsuleHeight
     readonly property real contentHeight: Style.capsuleHeight
@@ -47,13 +39,13 @@ Item {
             pointSize: Style.fontSizeL
             applyUiScale: false
             color: {
-                if (root.connected) return "#4caf50"
-                if (root.connecting) return "#ffeb3b"
+                if (mainInstance?.connected ?? false) return "#4caf50"
+                if (mainInstance?.connecting ?? false) return "#ffeb3b"
                 return mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
             }
 
             SequentialAnimation on opacity {
-                running: root.connecting
+                running: mainInstance?.connecting ?? false
                 loops: Animation.Infinite
                 alwaysRunToEnd: true
 
@@ -71,52 +63,47 @@ Item {
         }
     }
 
-    // Poll for tunnel interface status
-    Timer {
-        interval: root.connecting ? 500 : 10000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: checkStatus.running = true
-    }
+    NPopupContextMenu {
+        id: contextMenu
 
-    Process {
-        id: checkStatus
-        command: ["sh", "-c", "ip link show " + root.iface + " 2>/dev/null | grep -q ',UP,'"]
-        onExited: function(exitCode, exitStatus) {
-            root.connected = (exitCode === 0)
-            if (root.connected) {
-                root.connecting = false
+        model: [
+            {
+                "label": (mainInstance?.connected ?? false) ? "Disconnect" : "Connect",
+                "action": "toggle",
+                "icon": (mainInstance?.connected ?? false) ? "plug-x" : "plug",
+                "enabled": mainInstance?.configured ?? false,
+                "visible": !(mainInstance?.connecting ?? false) || (mainInstance?.connected ?? false)
+            },
+            {
+                "label": "Cancel connect",
+                "action": "cancel",
+                "icon": "x",
+                "visible": (mainInstance?.connecting ?? false) && !(mainInstance?.connected ?? false)
+            },
+            {
+                "label": "Widget settings",
+                "action": "widget-settings",
+                "icon": "settings"
+            }
+        ]
+
+        onTriggered: action => {
+            contextMenu.close()
+            PanelService.closeContextMenu(screen)
+
+            if (action === "widget-settings") {
+                BarService.openPluginSettings(screen, pluginApi.manifest)
+            } else if (action === "toggle") {
+                if (!mainInstance) return
+                if (mainInstance.connected) {
+                    mainInstance.disconnect()
+                } else {
+                    mainInstance.connect()
+                }
+            } else if (action === "cancel") {
+                mainInstance?.cancelConnect()
             }
         }
-    }
-
-    Process {
-        id: connectProc
-        command: ["sh", "-c", "sudo -E gpclient connect " + root.portal + root.gatewayArg + " --default-browser -i " + root.iface]
-        onExited: function(exitCode, exitStatus) {
-            // gpclient exited without bringing iface up → auth failed or aborted
-            if (!root.connected) {
-                root.connecting = false
-            }
-        }
-    }
-
-    Process {
-        id: disconnectProc
-        command: ["sh", "-c", "sudo -E gpclient disconnect"]
-        onExited: function(exitCode, exitStatus) {
-            root.connecting = false
-            root.connected = false
-        }
-    }
-
-    // Kill any in-flight `gpclient connect` (incl. its sudo wrapper) when
-    // the user cancels mid-connect. `gpclient disconnect` only tears down
-    // an established session and leaves the connect process running.
-    Process {
-        id: killConnectProc
-        command: ["sh", "-c", "sudo pkill -TERM -f 'gpclient connect' 2>/dev/null; true"]
     }
 
     MouseArea {
@@ -128,31 +115,25 @@ Item {
 
         onEntered: {
             let msg
-            if (!root.configured) {
+            if (!(mainInstance?.configured ?? false)) {
                 msg = "VPN not configured • Set NOCTALIA_GPCLIENT_PORTAL"
-            } else if (root.connected) {
-                msg = "Connected • Right-click to disconnect"
-            } else if (root.connecting) {
+            } else if (mainInstance?.connected ?? false) {
+                msg = "Connected • Click for details"
+            } else if (mainInstance?.connecting ?? false) {
                 msg = "Connecting • Right-click to cancel"
             } else {
-                msg = "Disconnected • Click to connect"
+                msg = "Disconnected • Click for details"
             }
             TooltipService.show(root, msg, BarService.getTooltipDirection())
         }
         onExited: TooltipService.hide()
 
         onClicked: function(mouse) {
-            if (!root.configured) return
             if (mouse.button === Qt.RightButton) {
-                if (root.connecting && !root.connected) {
-                    killConnectProc.running = true
-                } else if (root.connected) {
-                    disconnectProc.running = true
-                }
+                PanelService.showContextMenu(contextMenu, root, screen)
             } else {
-                if (!root.connected && !root.connecting) {
-                    root.connecting = true
-                    connectProc.running = true
+                if (pluginApi) {
+                    pluginApi.openPanel(root.screen, root)
                 }
             }
         }
