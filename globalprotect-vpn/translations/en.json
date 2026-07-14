@@ -1,0 +1,21 @@
+{
+  "title": "GlobalProtect VPN",
+  "settings": {
+    "portal": {
+      "label": "Portal",
+      "description": "GlobalProtect portal hostname (e.g. vpn.example.com). Empty falls back to $NOCTALIA_GPCLIENT_PORTAL."
+    },
+    "gateway": {
+      "label": "Gateway",
+      "description": "Optional gateway override (-g flag). Empty for auto / $NOCTALIA_GPCLIENT_GATEWAY."
+    },
+    "iface": {
+      "label": "Interface",
+      "description": "Tunnel interface name. Empty falls back to $NOCTALIA_GPCLIENT_INTERFACE or gpd0."
+    },
+    "default_route": {
+      "label": "Default route via VPN",
+      "description": "Run `sudo ip route replace default dev <iface>` while connected; removed on disconnect."
+    }
+  }
+}

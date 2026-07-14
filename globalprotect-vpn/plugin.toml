@@ -1,6 +1,6 @@
 id = "nappairam/globalprotect-vpn"
 name = "GlobalProtect VPN"
-version = "2.0.0"
+version = "2.0.1"
 min_noctalia = "5.0.0"
 author = "Mariappan Ramasamy"
 license = "MIT"
@@ -15,27 +15,27 @@ entry = "main.luau"
 [[widget.setting]]
 key = "portal"
 type = "string"
-label = "Portal"
-description = "GlobalProtect portal hostname (e.g. vpn.example.com). Empty falls back to $NOCTALIA_GPCLIENT_PORTAL."
+label_key = "settings.portal.label"
+description_key = "settings.portal.description"
 default = ""
 
 [[widget.setting]]
 key = "gateway"
 type = "string"
-label = "Gateway"
-description = "Optional gateway override (-g flag). Empty for auto / $NOCTALIA_GPCLIENT_GATEWAY."
+label_key = "settings.gateway.label"
+description_key = "settings.gateway.description"
 default = ""
 
 [[widget.setting]]
 key = "iface"
 type = "string"
-label = "Interface"
-description = "Tunnel interface name. Empty falls back to $NOCTALIA_GPCLIENT_INTERFACE or gpd0."
+label_key = "settings.iface.label"
+description_key = "settings.iface.description"
 default = "gpd0"
 
 [[widget.setting]]
 key = "default_route"
 type = "bool"
-label = "Default route via VPN"
-description = "Run `sudo ip route replace default dev <iface>` while connected; removed on disconnect."
+label_key = "settings.default_route.label"
+description_key = "settings.default_route.description"
 default = false
