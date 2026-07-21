@@ -1,7 +1,7 @@
 id = "nappairam/globalprotect-vpn"
 name = "GlobalProtect VPN"
-version = "2.0.1"
-min_noctalia = "5.0.0"
+version = "2.0.2"
+plugin_api = 3
 author = "Mariappan Ramasamy"
 license = "MIT"
 description = "GlobalProtect VPN connection toggle with status indicator"

@@ -4,10 +4,10 @@
 [[plugin]]
 id = "nappairam/globalprotect-vpn"
 name = "GlobalProtect VPN"
-version = "2.0.1"
+version = "2.0.2"
 author = "Mariappan Ramasamy"
 description = "GlobalProtect VPN connection toggle with status indicator"
 license = "MIT"
-min_noctalia = "5.0.0"
+plugin_api = 3
 icon = "shield"
 tags = ["Network", "Bar", "VPN"]
