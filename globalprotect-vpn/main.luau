@@ -3,7 +3,7 @@
 -- Left click  : connect / disconnect
 -- Right click : cancel an in-flight connect
 --
--- Settings (declared in plugin.toml, read via barWidget.getConfig): portal,
+-- Settings (declared in plugin.toml, read via noctalia.getConfig): portal,
 -- gateway, iface, default_route. Empty text settings fall back to the
 -- NOCTALIA_GPCLIENT_{PORTAL,GATEWAY,INTERFACE} environment variables.
 
@@ -22,7 +22,7 @@ local postConnectTicks = 0
 
 -- ── settings helpers ──────────────────────────────────────────────────────--
 local function settingStr(key, envName, default)
-  local v = barWidget.getConfig(key)
+  local v = noctalia.getConfig(key)
   if v ~= nil and v ~= "" then
     return v
   end
@@ -48,7 +48,7 @@ local function iface()
 end
 
 local function defaultRoute()
-  return barWidget.getConfig("default_route") == true
+  return noctalia.getConfig("default_route") == true
 end
 
 local function configured()
@@ -69,7 +69,7 @@ local function render()
 
   local tip
   if not configured() then
-    tip = { { "GlobalProtect", "Not configured" }, { "Hint", "Set the portal in widget settings" } }
+    tip = { { "GlobalProtect", "Not configured" }, { "Hint", "Set the portal in plugin settings" } }
   elseif connected then
     tip = { { "GlobalProtect", "Connected" }, { "Interface", iface() }, { "Portal", portal() } }
   elseif connecting then

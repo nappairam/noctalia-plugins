@@ -1,6 +1,6 @@
 id = "nappairam/globalprotect-vpn"
 name = "GlobalProtect VPN"
-version = "2.0.2"
+version = "2.1.0"
 plugin_api = 3
 author = "Mariappan Ramasamy"
 license = "MIT"
@@ -8,34 +8,34 @@ description = "GlobalProtect VPN connection toggle with status indicator"
 icon = "shield"
 tags = ["Network", "Bar", "VPN"]
 
-[[widget]]
-id = "globalprotect-vpn"
-entry = "main.luau"
-
-[[widget.setting]]
+[[setting]]
 key = "portal"
 type = "string"
 label_key = "settings.portal.label"
 description_key = "settings.portal.description"
 default = ""
 
-[[widget.setting]]
+[[setting]]
 key = "gateway"
 type = "string"
 label_key = "settings.gateway.label"
 description_key = "settings.gateway.description"
 default = ""
 
-[[widget.setting]]
+[[setting]]
 key = "iface"
 type = "string"
 label_key = "settings.iface.label"
 description_key = "settings.iface.description"
 default = "gpd0"
 
-[[widget.setting]]
+[[setting]]
 key = "default_route"
 type = "bool"
 label_key = "settings.default_route.label"
 description_key = "settings.default_route.description"
 default = false
+
+[[widget]]
+id = "globalprotect-vpn"
+entry = "main.luau"
